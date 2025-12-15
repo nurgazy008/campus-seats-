@@ -56,3 +56,4 @@ struct Ticket: Identifiable, Codable {
         return "Event:\(eventId)|Seats:\(seatsInfo)|Time:\(purchaseDate.timeIntervalSince1970)"
     }
 }
+

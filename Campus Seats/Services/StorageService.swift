@@ -56,6 +56,36 @@ class StorageService {
         userDefaults.removeObject(forKey: key)
     }
     
+    // MARK: - Занятые места
+    
+    private let occupiedSeatsKey = "occupiedSeats_"
+    
+    /// Сохранить занятые места для события
+    func saveOccupiedSeats(_ seatIds: [String], for eventId: String) {
+        let key = occupiedSeatsKey + eventId
+        userDefaults.set(seatIds, forKey: key)
+        userDefaults.synchronize()
+        print("✅ Сохранено \(seatIds.count) занятых мест для события \(eventId)")
+    }
+    
+    /// Загрузить занятые места для события
+    func loadOccupiedSeats(for eventId: String) -> [String] {
+        let key = occupiedSeatsKey + eventId
+        guard let seatIds = userDefaults.array(forKey: key) as? [String] else {
+            print("ℹ️ Нет сохраненных занятых мест для события \(eventId)")
+            return []
+        }
+        print("✅ Загружено \(seatIds.count) занятых мест для события \(eventId)")
+        return seatIds
+    }
+    
+    /// Удалить все занятые места для события
+    func removeOccupiedSeats(for eventId: String) {
+        let key = occupiedSeatsKey + eventId
+        userDefaults.removeObject(forKey: key)
+        print("✅ Удалены занятые места для события \(eventId)")
+    }
+    
     // MARK: - Билеты
     
     private let ticketsKey = "savedTickets"

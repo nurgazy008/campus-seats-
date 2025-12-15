@@ -23,3 +23,4 @@ struct Seat: Identifiable, Codable, Equatable {
 }
 
 
+

@@ -22,6 +22,7 @@ class SeatGridViewModel: ObservableObject {
         self.event = event
         generateSeats()
         loadSavedSelection()
+        loadOccupiedSeats()
     }
     
     /// Генерация сетки мест
@@ -179,6 +180,34 @@ class SeatGridViewModel: ObservableObject {
         }
         
         seats[index].isOccupied.toggle()
+        
+        // Сохраняем занятые места
+        saveOccupiedSeats()
+    }
+    
+    /// Сохранение занятых мест
+    private func saveOccupiedSeats() {
+        let occupiedSeatIds = seats.filter { $0.isOccupied }.map { $0.id }
+        storageService.saveOccupiedSeats(occupiedSeatIds, for: event.id)
+    }
+    
+    /// Загрузка занятых мест
+    private func loadOccupiedSeats() {
+        let occupiedSeatIds = storageService.loadOccupiedSeats(for: event.id)
+        
+        var restoredCount = 0
+        for seatId in occupiedSeatIds {
+            if let index = seats.firstIndex(where: { $0.id == seatId }) {
+                seats[index].isOccupied = true
+                restoredCount += 1
+            } else {
+                print("⚠️ Занятое место \(seatId) не найдено в сетке")
+            }
+        }
+        
+        if restoredCount > 0 {
+            print("✅ Восстановлено \(restoredCount) занятых мест")
+        }
     }
     
     /// Генерация QR кода для всех выбранных мест
