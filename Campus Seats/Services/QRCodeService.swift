@@ -8,36 +8,42 @@
 import UIKit
 import CoreImage
 
-/// Сервис для генерации QR кодов
+/// QR код құру сервисі
 class QRCodeService {
+    /// Singleton үлгісі - бір ғана дана
     static let shared = QRCodeService()
     
+    /// Сырттан тікелей құруға болмайды
     private init() {}
     
-    /// Генерация QR кода из строки
-    /// - Parameters:
-    ///   - string: Текст для кодирования
-    ///   - size: Размер изображения (по умолчанию 200x200)
-    /// - Returns: UIImage с QR кодом или nil при ошибке
+    /// Мәтіннен QR код кескінін құрады
     func generateQRCode(from string: String, size: CGSize = CGSize(width: 200, height: 200)) -> UIImage? {
+        // Мәтінні UTF-8 дерекке айналдыру
         guard let data = string.data(using: .utf8) else { return nil }
         
+        // QR код генераторын құру
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+        // QR код мәтінін орнату
         filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("H", forKey: "inputCorrectionLevel") // Высокий уровень коррекции ошибок
+        // Жоғары түзету деңгейі (30% бұзылуға төзімді)
+        filter.setValue("H", forKey: "inputCorrectionLevel")
         
+        // Фильтрден кескін алу
         guard let ciImage = filter.outputImage else { return nil }
-        
-        // Масштабирование для лучшего качества
+        // Масштабтау коэффициенттерін есептеу
         let scaleX = size.width / ciImage.extent.size.width
         let scaleY = size.height / ciImage.extent.size.height
+        // Кескінді қажетті өлшемге кеңейту
         let transformedImage = ciImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
         
+        // Core Image контекстін құру
         let context = CIContext()
+        // CGImage алу
         guard let cgImage = context.createCGImage(transformedImage, from: transformedImage.extent) else {
             return nil
         }
         
+        // UIImage қайтару
         return UIImage(cgImage: cgImage)
     }
 }

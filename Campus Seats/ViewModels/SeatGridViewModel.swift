@@ -8,14 +8,19 @@
 import Foundation
 import SwiftUI
 
-/// ViewModel для управления grid мест
+/// Орындар торын басқару үшін ViewModel
 @MainActor
 class SeatGridViewModel: ObservableObject {
+    /// Барлық орындар тізімі
     @Published var seats: [Seat] = []
+    /// Таңдалған орындар тізімі
     @Published var selectedSeats: [Seat] = []
+    /// Орын таңдау объектісі
     @Published var seatSelection: SeatSelection?
     
+    /// Оқиға
     let event: Event
+    /// Деректерді сақтау сервисі
     private let storageService = StorageService.shared
     
     init(event: Event) {
@@ -25,10 +30,11 @@ class SeatGridViewModel: ObservableObject {
         loadOccupiedSeats()
     }
     
-    /// Генерация сетки мест
+    /// Орындар торын генерациялау
     private func generateSeats() {
         var generatedSeats: [Seat] = []
         
+        // Қатарлар мен бағандар бойынша орындар құру
         for row in 0..<event.totalRows {
             for column in 0..<event.totalColumns {
                 let seat = Seat(
@@ -45,40 +51,37 @@ class SeatGridViewModel: ObservableObject {
         self.seats = generatedSeats
     }
     
-    /// Выбор/снятие выбора места (toggle)
+    /// Орынды таңдау/таңдаудан алып тастау
     func selectSeat(_ seat: Seat) {
-        // Валидация: нельзя выбрать занятое место
+        // Бос емес орынды тексеру
         guard !seat.isOccupied else {
+            let notification = UINotificationFeedbackGenerator()
+            notification.notificationOccurred(.warning)
             print("Ошибка: место занято")
             return
         }
         
-        // Валидация: проверка существования места
         guard let index = seats.firstIndex(where: { $0.id == seat.id }) else {
             print("Ошибка: место не найдено")
             return
         }
         
-        // Переключение выбора места
+        // Таңдау күйін ауыстыру
         if seats[index].isSelected {
-            // Снимаем выбор
             seats[index].isSelected = false
             selectedSeats.removeAll { $0.id == seat.id }
         } else {
-            // Добавляем выбор
             seats[index].isSelected = true
             if let updatedSeat = seats.first(where: { $0.id == seat.id }) {
                 selectedSeats.append(updatedSeat)
             }
         }
         
-        // Сохранение выбора
         saveSelection()
     }
     
-    /// Очистка всех выбранных мест
+    /// Барлық таңдауларды тазалау
     func clearSelection() {
-        // Снимаем выбор со всех мест
         for selectedSeat in selectedSeats {
             if let index = seats.firstIndex(where: { $0.id == selectedSeat.id }) {
                 seats[index].isSelected = false
@@ -91,14 +94,13 @@ class SeatGridViewModel: ObservableObject {
         print("✅ Все места очищены")
     }
     
-    /// Сохранение выбора (без создания билета)
+    /// Таңдалған орындарды сақтау
     private func saveSelection() {
-        // Создаем массив выбранных мест
         let selectedSeatItems = selectedSeats.map { seat in
             SelectedSeat(seatId: seat.id, seatNumber: seat.seatNumber)
         }
         
-        // Создаем или обновляем выбор
+        // Мәнін жаңарту немесе жаңа құру
         if var existingSelection = seatSelection {
             existingSelection.selectedSeats = selectedSeatItems
             seatSelection = existingSelection
@@ -106,33 +108,29 @@ class SeatGridViewModel: ObservableObject {
             seatSelection = SeatSelection(eventId: event.id, selectedSeats: selectedSeatItems)
         }
         
-        // Сохраняем только выбор (без билета)
         if let selection = seatSelection {
             storageService.saveSeatSelection(selection, for: event.id)
             print("💾 Сохранено \(selectedSeats.count) мест: \(selection.seatNumbers)")
         }
     }
     
-    /// Бронирование мест (создание билета)
+    /// Таңдалған орындарды брондау (билет құру)
     func bookSeats() -> Bool {
         guard !selectedSeats.isEmpty else {
             print("❌ Нет выбранных мест для бронирования")
             return false
         }
         
-        // Создаем массив выбранных мест
         let selectedSeatItems = selectedSeats.map { seat in
             SelectedSeat(seatId: seat.id, seatNumber: seat.seatNumber)
         }
         
-        // Создаем выбор
         let selection = SeatSelection(eventId: event.id, selectedSeats: selectedSeatItems)
         seatSelection = selection
         
-        // Сохраняем выбор
         storageService.saveSeatSelection(selection, for: event.id)
         
-        // Создаем и сохраняем билет
+        // Билет құру және сақтау
         let ticket = Ticket(event: event, seatSelection: selection)
         storageService.saveTicket(ticket)
         
@@ -140,7 +138,7 @@ class SeatGridViewModel: ObservableObject {
         return true
     }
     
-    /// Загрузка сохраненного выбора
+    /// Сақталған таңдауларды жүктеу
     private func loadSavedSelection() {
         guard let savedSelection = storageService.loadSeatSelection(for: event.id) else {
             print("ℹ️ Нет сохраненных мест для события \(event.id)")
@@ -148,9 +146,8 @@ class SeatGridViewModel: ObservableObject {
         }
         
         seatSelection = savedSelection
-        
-        // Восстановление всех выбранных мест
         var restoredCount = 0
+        // Сақталған орындарды қалпына келтіру
         for selectedSeatItem in savedSelection.selectedSeats {
             if let index = seats.firstIndex(where: { $0.id == selectedSeatItem.seatId }) {
                 seats[index].isSelected = true
@@ -168,34 +165,35 @@ class SeatGridViewModel: ObservableObject {
         print("✅ Восстановлено \(restoredCount) из \(savedSelection.selectedSeats.count) сохраненных мест")
     }
     
-    /// Переключение статуса занятости места
+    /// Орынның бос емес күйін ауыстыру
     func toggleOccupied(_ seat: Seat) {
         guard let index = seats.firstIndex(where: { $0.id == seat.id }) else { return }
         
-        // Если место было выбрано, снимаем выбор
+        // Егер орын таңдалған болса, таңдаудан алып тастау
         if seats[index].isSelected {
             seats[index].isSelected = false
             selectedSeats.removeAll { $0.id == seat.id }
             saveSelection()
         }
         
+        // Бос емес күйін ауыстыру
         seats[index].isOccupied.toggle()
         
-        // Сохраняем занятые места
         saveOccupiedSeats()
     }
     
-    /// Сохранение занятых мест
+    /// Бос емес орындарды сақтау
     private func saveOccupiedSeats() {
         let occupiedSeatIds = seats.filter { $0.isOccupied }.map { $0.id }
         storageService.saveOccupiedSeats(occupiedSeatIds, for: event.id)
     }
     
-    /// Загрузка занятых мест
+    /// Бос емес орындарды жүктеу
     private func loadOccupiedSeats() {
         let occupiedSeatIds = storageService.loadOccupiedSeats(for: event.id)
         
         var restoredCount = 0
+        // Бос емес орындарды қалпына келтіру
         for seatId in occupiedSeatIds {
             if let index = seats.firstIndex(where: { $0.id == seatId }) {
                 seats[index].isOccupied = true
@@ -210,7 +208,7 @@ class SeatGridViewModel: ObservableObject {
         }
     }
     
-    /// Генерация QR кода для всех выбранных мест
+    /// QR код құру
     func generateQRCode() -> UIImage? {
         guard let selection = seatSelection, !selection.selectedSeats.isEmpty else {
             print("Ошибка: не выбрано ни одного места")
@@ -229,7 +227,6 @@ class SeatGridViewModel: ObservableObject {
     }
 }
 
-/// Ошибки выбора места
 enum SeatError: LocalizedError {
     case seatOccupied
     case seatNotFound
@@ -244,7 +241,6 @@ enum SeatError: LocalizedError {
     }
 }
 
-/// Ошибки QR кода
 enum QRCodeError: LocalizedError {
     case noSelection
     case generationFailed

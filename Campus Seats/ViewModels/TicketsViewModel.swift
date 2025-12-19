@@ -8,32 +8,35 @@
 import Foundation
 import SwiftUI
 
-/// ViewModel для управления билетами
+/// Билеттерді басқару үшін ViewModel
 @MainActor
 class TicketsViewModel: ObservableObject {
+    /// Билеттер тізімі
     @Published var tickets: [Ticket] = []
+    /// Жүктелу күйі
     @Published var isLoading = false
     
+    /// Деректерді сақтау сервисі
     private let storageService = StorageService.shared
     
     init() {
         loadTickets()
     }
     
-    /// Загрузка билетов
+    /// Барлық билеттерді жүктеу
     func loadTickets() {
         isLoading = true
         tickets = storageService.loadAllTickets()
         isLoading = false
     }
     
-    /// Удалить билет
+    /// Билетті жою
     func deleteTicket(_ ticket: Ticket) {
         storageService.deleteTicket(ticket)
         loadTickets()
     }
     
-    /// Сохранить билет (вызывается при выборе мест)
+    /// Билетті сақтау
     func saveTicket(event: Event, seatSelection: SeatSelection) {
         let ticket = Ticket(event: event, seatSelection: seatSelection)
         storageService.saveTicket(ticket)

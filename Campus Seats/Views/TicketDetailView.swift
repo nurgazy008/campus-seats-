@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-/// Детальный вид билета с QR кодом
 struct TicketDetailView: View {
     let ticket: Ticket
     @Environment(\.dismiss) var dismiss
@@ -16,7 +15,6 @@ struct TicketDetailView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Градиентный фон
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
                     startPoint: .topLeading,
@@ -26,7 +24,6 @@ struct TicketDetailView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Информация о событии
                         VStack(alignment: .leading, spacing: 16) {
                             Text(ticket.eventName)
                                 .font(.title)
@@ -42,12 +39,18 @@ struct TicketDetailView: View {
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(.systemBackground))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(.systemBackground), Color(.systemBackground).opacity(0.95)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                         )
                         .padding(.horizontal)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                         
-                        // QR код
                         if let qrImage = qrImage {
                             VStack(spacing: 16) {
                                 Text("QR код для входа")
@@ -61,7 +64,13 @@ struct TicketDetailView: View {
                                     .frame(width: 280, height: 280)
                                     .background(
                                         RoundedRectangle(cornerRadius: 20)
-                                            .fill(Color.white)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.white, Color.white.opacity(0.95)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                                     )
                                 
@@ -73,10 +82,18 @@ struct TicketDetailView: View {
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(.systemBackground))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color(.systemBackground), Color(.systemBackground).opacity(0.95)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                             )
                             .padding(.horizontal)
+                            .transition(.scale(scale: 0.8).combined(with: .opacity))
+                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: qrImage)
                         }
                     }
                     .padding(.vertical)
@@ -87,11 +104,15 @@ struct TicketDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Закрыть") {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
                         dismiss()
                     }
                 }
             }
             .onAppear {
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
                 generateQRCode()
             }
         }

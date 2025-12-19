@@ -8,23 +8,26 @@
 import Foundation
 import SwiftUI
 
-/// ViewModel для управления событиями
+/// Оқиғаларды басқару үшін ViewModel
 @MainActor
 class EventViewModel: ObservableObject {
+    /// Оқиғалар тізімі
     @Published var events: [Event] = []
+    /// Жүктелу күйі
     @Published var isLoading = false
+    /// Қате хабарламасы
     @Published var errorMessage: String?
     
     init() {
         loadEvents()
     }
     
-    /// Загрузка событий
+    /// Оқиғаларды жүктеу (демо деректермен)
     func loadEvents() {
         isLoading = true
         errorMessage = nil
         
-        // Имитация загрузки данных (в реальном приложении здесь будет API запрос)
+        // Деректерді жүктеуді имитациялау (нақты қосымшада мұнда API сұрауы болады)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             do {
                 let demoEvents = Self.getDemoEvents()
@@ -38,24 +41,28 @@ class EventViewModel: ObservableObject {
         }
     }
     
-    /// Валидация событий
+    /// Оқиғаларды валидациялау
     private func validateEvents(_ events: [Event]) throws {
+        // Тізім бос емес екенін тексеру
         guard !events.isEmpty else {
             throw EventError.emptyEvents
         }
         
+        // Әр оқиғаны тексеру
         for event in events {
+            // Орындар конфигурациясын тексеру
             guard event.totalRows > 0 && event.totalColumns > 0 else {
                 throw EventError.invalidSeatConfiguration
             }
             
+            // Оқиға атауын тексеру
             guard !event.name.isEmpty else {
                 throw EventError.invalidEventName
             }
         }
     }
     
-    /// Получить список демо-событий
+    /// Демо-оқиғалар тізімін алу
     static func getDemoEvents() -> [Event] {
         let calendar = Calendar.current
         let now = Date()
@@ -96,12 +103,12 @@ class EventViewModel: ObservableObject {
         ]
     }
     
-    /// Получить событие по ID
+    /// ID бойынша оқиғаны алу
     func getEvent(by id: String) -> Event? {
         events.first { $0.id == id }
     }
     
-    /// Получить одно демо-событие для preview
+    /// Preview үшін бір демо-оқиғаны алу
     static func getDemoEvent() -> Event {
         getDemoEvents().first ?? Event(
             id: "event_001",
@@ -114,7 +121,7 @@ class EventViewModel: ObservableObject {
     }
 }
 
-/// Ошибки событий
+/// Оқиғалар қателері
 enum EventError: LocalizedError {
     case emptyEvents
     case invalidSeatConfiguration
@@ -123,11 +130,11 @@ enum EventError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emptyEvents:
-            return "Нет доступных событий"
+            return "Қолжетімді оқиғалар жоқ"
         case .invalidSeatConfiguration:
-            return "Неверная конфигурация мест"
+            return "Орындар конфигурациясы дұрыс емес"
         case .invalidEventName:
-            return "Неверное название события"
+            return "Оқиға атауы дұрыс емес"
         }
     }
 }

@@ -7,30 +7,37 @@
 
 import Foundation
 
-/// Сервис для сохранения и загрузки данных
+/// Деректерді сақтау және жүктеу сервисі
 class StorageService {
+    /// Singleton үлгісі - бір ғана дана
     static let shared = StorageService()
+    /// UserDefaults - деректерді сақтау үшін
     private let userDefaults = UserDefaults.standard
     
+    /// Сырттан тікелей құруға болмайды
     private init() {}
     
+    // MARK: - Орын таңдауларды сақтау/жүктеу
+    
+    /// Орын таңдаулар үшін кілт префиксі
     private let selectedSeatKey = "selectedSeat_"
     
-    /// Сохранить выбранные места для события
+    /// Оқиға үшін таңдалған орындарды сақтайды
     func saveSeatSelection(_ selection: SeatSelection, for eventId: String) {
         let key = selectedSeatKey + eventId
         let encoder = JSONEncoder()
+        // Күндерді ISO8601 форматта сақтау
         encoder.dateEncodingStrategy = .iso8601
         if let encoded = try? encoder.encode(selection) {
             userDefaults.set(encoded, forKey: key)
-            userDefaults.synchronize() // Принудительная синхронизация
+            userDefaults.synchronize()
             print("✅ Сохранено мест: \(selection.selectedSeats.count) для события \(eventId)")
         } else {
             print("❌ Ошибка сохранения мест")
         }
     }
     
-    /// Загрузить выбранные места для события
+    /// Оқиға үшін сақталған орын таңдауларды жүктейді
     func loadSeatSelection(for eventId: String) -> SeatSelection? {
         let key = selectedSeatKey + eventId
         guard let data = userDefaults.data(forKey: key) else {
@@ -39,6 +46,7 @@ class StorageService {
         }
         
         let decoder = JSONDecoder()
+        // Күндерді ISO8601 форматтан оқу
         decoder.dateDecodingStrategy = .iso8601
         
         if let selection = try? decoder.decode(SeatSelection.self, from: data) {
@@ -50,17 +58,18 @@ class StorageService {
         }
     }
     
-    /// Удалить выбранное место для события
+    /// Оқиға үшін сақталған орын таңдауларды жояды
     func removeSeatSelection(for eventId: String) {
         let key = selectedSeatKey + eventId
         userDefaults.removeObject(forKey: key)
     }
     
-    // MARK: - Занятые места
+    // MARK: - Бос емес орындарды сақтау/жүктеу
     
+    /// Бос емес орындар үшін кілт префиксі
     private let occupiedSeatsKey = "occupiedSeats_"
     
-    /// Сохранить занятые места для события
+    /// Оқиға үшін бос емес орындар ID-лерін сақтайды
     func saveOccupiedSeats(_ seatIds: [String], for eventId: String) {
         let key = occupiedSeatsKey + eventId
         userDefaults.set(seatIds, forKey: key)
@@ -68,7 +77,7 @@ class StorageService {
         print("✅ Сохранено \(seatIds.count) занятых мест для события \(eventId)")
     }
     
-    /// Загрузить занятые места для события
+    /// Оқиға үшін бос емес орындар ID-лерін жүктейді
     func loadOccupiedSeats(for eventId: String) -> [String] {
         let key = occupiedSeatsKey + eventId
         guard let seatIds = userDefaults.array(forKey: key) as? [String] else {
@@ -79,23 +88,23 @@ class StorageService {
         return seatIds
     }
     
-    /// Удалить все занятые места для события
+    /// Оқиға үшін бос емес орындар деректерін жояды
     func removeOccupiedSeats(for eventId: String) {
         let key = occupiedSeatsKey + eventId
         userDefaults.removeObject(forKey: key)
         print("✅ Удалены занятые места для события \(eventId)")
     }
     
-    // MARK: - Билеты
+    // MARK: - Билеттерді сақтау/жүктеу/жою
     
+    /// Билеттер үшін кілт
     private let ticketsKey = "savedTickets"
     
-    /// Сохранить билет
+    /// Билетті сақтайды (егер сол оқиға үшін билет бар болса, оны ауыстырады)
     func saveTicket(_ ticket: Ticket) {
         var tickets = loadAllTickets()
-        // Удаляем старый билет для этого события, если есть
+        // Сол оқиға үшін ескі билетті жою
         tickets.removeAll { $0.eventId == ticket.eventId }
-        // Добавляем новый
         tickets.append(ticket)
         
         let encoder = JSONEncoder()
@@ -109,7 +118,7 @@ class StorageService {
         }
     }
     
-    /// Загрузить все билеты
+    /// Барлық сақталған билеттерді жүктейді (оқиға күні бойынша сұрыпталған)
     func loadAllTickets() -> [Ticket] {
         guard let data = userDefaults.data(forKey: ticketsKey) else {
             return []
@@ -119,12 +128,13 @@ class StorageService {
         decoder.dateDecodingStrategy = .iso8601
         
         if let tickets = try? decoder.decode([Ticket].self, from: data) {
-            return tickets.sorted { $0.eventDate > $1.eventDate } // Сортировка по дате (новые сверху)
+            // Оқиға күні бойынша кему ретімен сұрыптау
+            return tickets.sorted { $0.eventDate > $1.eventDate }
         }
         return []
     }
     
-    /// Удалить билет
+    /// Билетті жояды
     func deleteTicket(_ ticket: Ticket) {
         var tickets = loadAllTickets()
         tickets.removeAll { $0.id == ticket.id }

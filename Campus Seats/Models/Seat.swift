@@ -7,20 +7,21 @@
 
 import Foundation
 
-/// Модель места в аудитории
-struct Seat: Identifiable, Codable, Equatable {
+/// Аудиториядағы орын моделі
+struct Seat: Identifiable, Codable, Equatable {//id қасиеті бар, json түрлендіруге болады, екі орынды салыстыруға
     let id: String
     let row: Int
     let column: Int
     var isSelected: Bool = false
-    var isOccupied: Bool = false
+    var isOccupied: Bool = false // орын боспа
     
-    /// Уникальный номер места (например, "A1", "B3")
+    /// Орынның бірегей нөмірі (мысалы, "A1", "B3")
     var seatNumber: String {
         let rowLetter = String(Character(UnicodeScalar(65 + row)!)) // A, B, C...
         return "\(rowLetter)\(column + 1)"
     }
 }
-
+/// row --> A
+/// column --> int
 
 

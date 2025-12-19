@@ -7,17 +7,20 @@
 
 import SwiftUI
 
-/// Вид для отображения QR кода
+/// QR код көрсететін View
 struct QRCodeView: View {
+    /// QR код кескіні
     let qrImage: UIImage
+    /// Орындар нөмірлері
     let seatNumbers: String
+    /// Орындар саны
     let count: Int
+    /// Жабу функциясы
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Градиентный фон
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
                     startPoint: .topLeading,
@@ -33,6 +36,7 @@ struct QRCodeView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 50))
                                 .foregroundColor(.green)
+                                .symbolEffect(.bounce, value: count)
                             
                             Text("Места забронированы!")
                                 .font(.title2)
@@ -43,8 +47,8 @@ struct QRCodeView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
+                        .transition(.move(edge: .top).combined(with: .opacity))
                         
-                        // QR код с анимацией
                         Image(uiImage: qrImage)
                             .resizable()
                             .interpolation(.none)
@@ -52,10 +56,18 @@ struct QRCodeView: View {
                             .frame(width: 280, height: 280)
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.white)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.white, Color.white.opacity(0.95)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                             )
                             .padding()
+                            .transition(.scale(scale: 0.8).combined(with: .opacity))
+                            .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: qrImage)
                         
                         VStack(spacing: 8) {
                             HStack {
@@ -77,6 +89,8 @@ struct QRCodeView: View {
                     Spacer()
                     
                     Button(action: {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
                         dismiss()
                     }) {
                         HStack {
@@ -103,6 +117,10 @@ struct QRCodeView: View {
             }
             .navigationTitle("QR код")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+            }
         }
     }
 }

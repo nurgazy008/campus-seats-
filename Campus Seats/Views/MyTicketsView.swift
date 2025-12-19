@@ -7,15 +7,16 @@
 
 import SwiftUI
 
-/// Экран "Мои билеты"
+/// Билеттер тізімін көрсететін View
 struct MyTicketsView: View {
+    /// Билеттер ViewModel
     @StateObject private var viewModel = TicketsViewModel()
+    /// Таңдалған билет
     @State private var selectedTicket: Ticket?
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Градиентный фон
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
                     startPoint: .topLeading,
@@ -30,11 +31,15 @@ struct MyTicketsView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {
-                            ForEach(viewModel.tickets) { ticket in
+                            ForEach(Array(viewModel.tickets.enumerated()), id: \.element.id) { index, ticket in
                                 TicketCardView(ticket: ticket) {
                                     selectedTicket = ticket
                                 }
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .move(edge: .leading).combined(with: .opacity)
+                                ))
+                                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * 0.05), value: viewModel.tickets.count)
                             }
                         }
                         .padding()
@@ -53,13 +58,19 @@ struct MyTicketsView: View {
     }
 }
 
-/// Карточка билета
+/// Билет карточкасы компоненті
 struct TicketCardView: View {
+    /// Билет
     let ticket: Ticket
+    /// Тапқанда орындалатын әрекет
     let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            onTap()
+        }) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 8) {
@@ -71,7 +82,6 @@ struct TicketCardView: View {
                             
                             Spacer()
                             
-                            // Бейдж "Забронировано"
                             Text("Забронировано")
                                 .font(.caption)
                                 .fontWeight(.semibold)
@@ -80,8 +90,15 @@ struct TicketCardView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
-                                        .fill(Color.green)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.green, Color.green.opacity(0.8)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
                                 )
+                                .shadow(color: .green.opacity(0.3), radius: 4, x: 0, y: 2)
                         }
                         
                         HStack(spacing: 16) {
@@ -133,7 +150,13 @@ struct TicketCardView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(.systemBackground), Color(.systemBackground).opacity(0.95)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             )
         }
@@ -141,7 +164,7 @@ struct TicketCardView: View {
     }
 }
 
-/// Пустой список билетов
+/// Бос билеттер экраны
 struct EmptyTicketsView: View {
     var body: some View {
         VStack(spacing: 20) {

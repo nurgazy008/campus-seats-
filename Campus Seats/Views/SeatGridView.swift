@@ -7,9 +7,11 @@
 
 import SwiftUI
 
-/// Основной вид с grid мест
+/// Орындар торын көрсететін View
 struct SeatGridView: View {
+    /// Орындар торы ViewModel
     @StateObject private var viewModel: SeatGridViewModel
+    /// QR код экранын көрсету күйі
     @State private var showQRCode = false
     
     init(event: Event) {
@@ -19,15 +21,11 @@ struct SeatGridView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Информация о событии
                 EventInfoView(event: viewModel.event, selectedSeats: viewModel.selectedSeats)
                 
-                // Легенда
                 legendView
-                
-                // Grid мест
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: viewModel.event.totalColumns), spacing: 8) {
-                    ForEach(viewModel.seats) { seat in
+                    ForEach(Array(viewModel.seats.enumerated()), id: \.element.id) { index, seat in
                         SeatView(
                             seat: seat,
                             onTap: {
@@ -42,23 +40,25 @@ struct SeatGridView: View {
                             }
                         )
                         .aspectRatio(1, contentMode: .fit)
+                        .transition(.scale.combined(with: .opacity))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.01), value: viewModel.seats.count)
                     }
                 }
                 .padding(.horizontal)
                 
-                // Кнопки действий
                 if !viewModel.selectedSeats.isEmpty {
                     VStack(spacing: 16) {
-                        // Кнопка бронирования
                         Button(action: {
-                            // Бронируем места
                             if viewModel.bookSeats() {
-                                // Показываем QR код после бронирования
-                                showQRCode = true
+                                let notification = UINotificationFeedbackGenerator()
+                                notification.notificationOccurred(.success)
                                 
-                                // Тактильная обратная связь
-                                let impact = UIImpactFeedbackGenerator(style: .medium)
-                                impact.impactOccurred()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    showQRCode = true
+                                }
+                            } else {
+                                let notification = UINotificationFeedbackGenerator()
+                                notification.notificationOccurred(.error)
                             }
                         }) {
                             HStack(spacing: 12) {
@@ -82,9 +82,11 @@ struct SeatGridView: View {
                             .shadow(color: .green.opacity(0.4), radius: 12, x: 0, y: 6)
                         }
                         
-                        // Кнопка очистки выбора
                         Button(action: {
-                            withAnimation {
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                            
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                 viewModel.clearSelection()
                             }
                         }) {
@@ -106,7 +108,6 @@ struct SeatGridView: View {
                     .padding(.bottom)
                 }
                 
-                // Подсказки
                 VStack(spacing: 4) {
                     Text("💡 Тап по месту - выбрать/снять выбор")
                         .font(.caption)
@@ -132,6 +133,7 @@ struct SeatGridView: View {
         }
     }
     
+    /// Легенда (орын күйлерін түсіндіру)
     private var legendView: some View {
         VStack(spacing: 12) {
             Text("Легенда")
@@ -165,6 +167,7 @@ struct SeatGridView: View {
         .padding(.horizontal)
     }
     
+    /// Легенда элементі
     private func legendItem(gradient: LinearGradient, borderColor: Color, text: String) -> some View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 6)

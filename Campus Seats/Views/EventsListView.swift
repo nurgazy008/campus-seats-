@@ -7,15 +7,16 @@
 
 import SwiftUI
 
-/// Список событий
+/// Оқиғалар тізімін көрсететін View
 struct EventsListView: View {
+    /// Оқиғалар ViewModel
     @StateObject private var viewModel = EventViewModel()
+    /// Таңдалған оқиға
     @State private var selectedEvent: Event?
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Градиентный фон
                 LinearGradient(
                     colors: [Color.blue.opacity(0.1), Color.purple.opacity(0.1)],
                     startPoint: .topLeading,
@@ -35,11 +36,15 @@ struct EventsListView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 16) {
-                            ForEach(viewModel.events) { event in
+                            ForEach(Array(viewModel.events.enumerated()), id: \.element.id) { index, event in
                                 EventCardView(event: event) {
                                     selectedEvent = event
                                 }
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                                    removal: .move(edge: .leading).combined(with: .opacity)
+                                ))
+                                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * 0.05), value: viewModel.events.count)
                             }
                         }
                         .padding()
@@ -60,13 +65,20 @@ struct EventsListView: View {
     }
 }
 
-/// Карточка события
+/// Оқиға карточкасы компоненті
 struct EventCardView: View {
+    /// Оқиға
     let event: Event
+    /// Тапқанда орындалатын әрекет
     let onTap: () -> Void
+    @State private var isPressed = false
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            onTap()
+        }) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 8) {
@@ -107,7 +119,13 @@ struct EventCardView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(.systemBackground), Color(.systemBackground).opacity(0.95)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             )
         }
@@ -115,7 +133,7 @@ struct EventCardView: View {
     }
 }
 
-/// Пустой список событий
+/// Бос оқиғалар экраны
 struct EmptyEventsView: View {
     var body: some View {
         VStack(spacing: 20) {
@@ -136,9 +154,11 @@ struct EmptyEventsView: View {
     }
 }
 
-/// Вид ошибки
+/// Қате экраны
 struct ErrorView: View {
+    /// Қате хабарламасы
     let message: String
+    /// Қайталау функциясы
     let onRetry: () -> Void
     
     var body: some View {
@@ -157,7 +177,11 @@ struct ErrorView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            Button(action: onRetry) {
+            Button(action: {
+                let impact = UIImpactFeedbackGenerator(style: .medium)
+                impact.impactOccurred()
+                onRetry()
+            }) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
                     Text("Повторить")
@@ -165,14 +189,21 @@ struct ErrorView: View {
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding()
-                .background(Color.blue)
+                .background(
+                    LinearGradient(
+                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .cornerRadius(12)
+                .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
     }
 }
 
-/// Стиль кнопки с анимацией масштаба
+/// Басылғанда масштабталатын батырма стилі
 struct ScaleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label

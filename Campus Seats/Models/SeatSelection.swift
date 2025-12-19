@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Модель выбранного места
+/// Таңдалған орын моделі
 struct SelectedSeat: Codable, Identifiable {
     let id: String
     let seatId: String
@@ -22,10 +22,10 @@ struct SelectedSeat: Codable, Identifiable {
     }
 }
 
-/// Модель выбранных мест для события
+/// Оқиға үшін таңдалған орындар моделі
 struct SeatSelection: Codable {
     let eventId: String
-    var selectedSeats: [SelectedSeat]
+    var selectedSeats: [SelectedSeat] //орындар қосылып/алынуы мүмкін
     let timestamp: Date
     
     init(eventId: String, selectedSeats: [SelectedSeat] = []) {
@@ -34,13 +34,13 @@ struct SeatSelection: Codable {
         self.timestamp = Date()
     }
     
-    /// Данные для QR кода (все выбранные места)
+    /// QR код үшін деректер (барлық таңдалған орындар)
     var qrData: String {
         let seatsInfo = selectedSeats.map { "\($0.seatNumber)" }.joined(separator: ",")
-        return "Event:\(eventId)|Seats:\(seatsInfo)|Time:\(timestamp.timeIntervalSince1970)"
+        return "Event:\(eventId)|Seats:\(seatsInfo)|Time:\(timestamp.timeIntervalSince1970)"// уақытты санға
     }
     
-    /// Список номеров мест
+    /// Орындар нөмірлерінің тізімі
     var seatNumbers: String {
         selectedSeats.map { $0.seatNumber }.joined(separator: ", ")
     }

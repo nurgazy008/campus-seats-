@@ -7,13 +7,17 @@
 
 import SwiftUI
 
-/// Виджет отдельного места
+/// Бір орынды көрсететін View
 struct SeatView: View {
+    /// Орын
     let seat: Seat
+    /// Тапқанда орындалатын әрекет
     let onTap: () -> Void
+    /// Ұзақ басқанда орындалатын әрекет
     let onLongPress: (() -> Void)?
     
     @State private var isPressed = false
+    /// Масштаб коэффициенті
     @State private var scale: CGFloat = 1.0
     
     init(seat: Seat, onTap: @escaping () -> Void, onLongPress: (() -> Void)? = nil) {
@@ -23,9 +27,23 @@ struct SeatView: View {
     }
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            let selection = UISelectionFeedbackGenerator()
+            selection.selectionChanged()
+            
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                scale = 0.85
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    scale = 1.0
+                }
+            }
+            
+            onTap()
+        }) {
             ZStack {
-                // Градиентный фон
                 RoundedRectangle(cornerRadius: 12)
                     .fill(seatGradient)
                     .overlay(
@@ -33,18 +51,24 @@ struct SeatView: View {
                             .stroke(borderColor, lineWidth: borderWidth)
                     )
                     .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: shadowOffset)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                seat.isSelected ? Color.blue.opacity(0.3) : Color.clear,
+                                lineWidth: seat.isSelected ? 2 : 0
+                            )
+                    )
                 
-                // Номер места и иконка выбора
                 VStack(spacing: 2) {
                     Text(seat.seatNumber)
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(textColor)
                     
-                    // Иконка выбора
                     if seat.isSelected {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 8))
                             .foregroundColor(.blue)
+                            .transition(.scale.combined(with: .opacity))
                     }
                 }
             }
@@ -53,24 +77,23 @@ struct SeatView: View {
         .disabled(seat.isOccupied)
         .scaleEffect(scale)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: scale)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: seat.isSelected)
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
-                    onLongPress?()
-                    // Тактильная обратная связь
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
+                    onLongPress?()
                 }
         )
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            if pressing {
-                scale = 0.9
-            } else {
-                scale = 1.0
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                scale = pressing ? 0.9 : 1.0
             }
         }, perform: {})
     }
     
+    /// Орын градиенті (күйіне байланысты)
     private var seatGradient: LinearGradient {
         if seat.isOccupied {
             return LinearGradient(
@@ -93,6 +116,7 @@ struct SeatView: View {
         }
     }
     
+    /// Шек түсі (күйіне байланысты)
     private var borderColor: Color {
         if seat.isOccupied {
             return .gray.opacity(0.6)
@@ -103,10 +127,12 @@ struct SeatView: View {
         }
     }
     
+    /// Шек ені
     private var borderWidth: CGFloat {
         seat.isSelected ? 3 : 1.5
     }
     
+    /// Көлеңке түсі (күйіне байланысты)
     private var shadowColor: Color {
         if seat.isSelected {
             return .blue.opacity(0.4)
@@ -117,10 +143,12 @@ struct SeatView: View {
         }
     }
     
+    /// Көлеңке радиусы
     private var shadowRadius: CGFloat {
         seat.isSelected ? 8 : 4
     }
     
+    /// Көлеңке офсеті
     private var shadowOffset: CGFloat {
         seat.isSelected ? 4 : 2
     }

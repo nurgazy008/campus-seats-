@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Модель билета
+/// Билет моделі
 struct Ticket: Identifiable, Codable {
     let id: String
     let eventId: String
@@ -27,7 +27,7 @@ struct Ticket: Identifiable, Codable {
         self.purchaseDate = Date()
     }
     
-    /// Форматированная дата события
+    /// Оқиғаның пішімделген күні
     var formattedEventDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -36,21 +36,21 @@ struct Ticket: Identifiable, Codable {
         return formatter.string(from: eventDate)
     }
     
-    /// Форматированная дата покупки
+    /// Сатып алудың пішімделген күні
     var formattedPurchaseDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .short
         formatter.locale = Locale(identifier: "ru_RU")
-        return formatter.string(from: purchaseDate)
+        return formatter.string(from: purchaseDate)// қысқаша формат мысаллы 15.12.2024
     }
     
-    /// Номера мест
+    /// Орындар нөмірлері
     var seatNumbers: String {
         selectedSeats.map { $0.seatNumber }.joined(separator: ", ")
     }
     
-    /// Данные для QR кода
+    /// QR код үшін деректер
     var qrData: String {
         let seatsInfo = selectedSeats.map { "\($0.seatNumber)" }.joined(separator: ",")
         return "Event:\(eventId)|Seats:\(seatsInfo)|Time:\(purchaseDate.timeIntervalSince1970)"

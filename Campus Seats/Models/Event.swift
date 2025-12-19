@@ -7,26 +7,26 @@
 
 import Foundation
 
-/// Модель события/лекции
+/// Оқиға/лекция моделі
 struct Event: Identifiable, Codable {
-    let id: String
-    let name: String
-    let date: Date
-    let room: String
-    let totalRows: Int
-    let totalColumns: Int
+    let id: String // id
+    let name: String // event атауы
+    let date: Date // күні мен уақыты
+    let room: String // аудитория
+    let totalRows: Int // қатарлар саны
+    let totalColumns: Int //жалпы орындар саны
     
-    /// Общее количество мест
+    /// Жалпы орындар саны
     var totalSeats: Int {
         totalRows * totalColumns
     }
     
-    /// Форматированная дата
+    /// Пішімделген күн
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "ru_RU")
+        let formatter = DateFormatter() // date оқылатын мәтінге айналдырады
+        formatter.dateStyle = .medium // 15 дек 2024
+        formatter.timeStyle = .short // 14:30
+        formatter.locale = Locale(identifier: "ru_RU") // орысшаға
         return formatter.string(from: date)
     }
 }

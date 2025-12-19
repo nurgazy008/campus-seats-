@@ -7,9 +7,11 @@
 
 import SwiftUI
 
-/// Вид с информацией о событии
+/// Оқиға ақпаратын көрсететін View
 struct EventInfoView: View {
+    /// Оқиға
     let event: Event
+    /// Таңдалған орындар
     let selectedSeats: [Seat]
     
     var body: some View {
@@ -45,7 +47,6 @@ struct EventInfoView: View {
                     }
                     .font(.headline)
                     
-                    // Список выбранных мест
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(selectedSeats) { seat in
@@ -57,8 +58,19 @@ struct EventInfoView: View {
                                     .padding(.vertical, 6)
                                     .background(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.blue.opacity(0.15))
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.1)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                     )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                    )
+                                    .transition(.scale.combined(with: .opacity))
                             }
                         }
                     }
@@ -87,10 +99,13 @@ struct EventInfoView: View {
     }
 }
 
-/// Строка информации
+/// Ақпарат жолы компоненті (белгіше мен мәтін)
 struct InfoRow: View {
+    /// Белгіше атауы
     let icon: String
+    /// Көрсетілетін мәтін
     let text: String
+    /// Белгіше түсі
     let color: Color
     
     var body: some View {
